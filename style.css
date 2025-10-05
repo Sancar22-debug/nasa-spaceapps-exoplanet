@@ -35,89 +35,15 @@ body {
 }
 
 .stars {
-    background: transparent url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="2" height="2"><circle cx="1" cy="1" r="0.5" fill="white" opacity="0.8"/></svg>') repeat;
-    animation: animateStars 50s linear infinite;
+    background: transparent;
 }
 
 .stars2 {
-    background: transparent url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="3" height="3"><circle cx="1.5" cy="1.5" r="0.8" fill="white" opacity="0.5"/></svg>') repeat;
-    animation: animateStars 100s linear infinite;
+    background: transparent;
 }
 
 .stars3 {
-    background: transparent url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="4" height="4"><circle cx="2" cy="2" r="1" fill="white" opacity="0.3"/></svg>') repeat;
-    animation: animateStars 150s linear infinite;
-}
-
-@keyframes animateStars {
-    from { transform: translateY(0px); }
-    to { transform: translateY(-2000px); }
-}
-
-.navbar {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    background: rgba(5, 8, 16, 0.9);
-    backdrop-filter: blur(20px);
-    border-bottom: 1px solid rgba(0, 217, 255, 0.2);
-    z-index: 1000;
-    padding: 0;
-}
-
-.nav-container {
-    max-width: 1400px;
-    margin: 0 auto;
-    padding: 20px 40px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.logo {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    font-family: 'Orbitron', sans-serif;
-    font-weight: 700;
-    font-size: 1.2rem;
-    letter-spacing: 3px;
-    color: var(--primary-color);
-}
-
-.logo-icon {
-    font-size: 1.8rem;
-    color: var(--accent-color);
-    animation: rotate 10s linear infinite;
-}
-
-@keyframes rotate {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
-}
-
-.nav-links {
-    display: flex;
-    gap: 40px;
-}
-
-.nav-link {
-    font-family: 'Space Grotesk', sans-serif;
-    font-weight: 500;
-    font-size: 0.85rem;
-    letter-spacing: 2px;
-    color: var(--text-secondary);
-    text-decoration: none;
-    padding: 8px 0;
-    border-bottom: 2px solid transparent;
-    transition: all 0.3s ease;
-}
-
-.nav-link:hover,
-.nav-link.active {
-    color: var(--primary-color);
-    border-bottom-color: var(--primary-color);
+    background: transparent;
 }
 
 .container {
@@ -846,6 +772,11 @@ button:disabled {
 
 .error {
     color: #ff4444;
+}
+
+@keyframes twinkle {
+    from { opacity: 0.3; }
+    to { opacity: 1; }
 }
 
 @media (max-width: 768px) {

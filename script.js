@@ -116,7 +116,7 @@ predictionForm.addEventListener('submit', async (event) => {
 
 // --- Chat Toggle Functionality ---
 chatToggle.addEventListener('click', () => {
-    chatContainer.classList.add('open');
+    chatContainer.classList.toggle('open');
 });
 
 chatClose.addEventListener('click', () => {
@@ -474,11 +474,34 @@ document.addEventListener('DOMContentLoaded', () => {
         'koi_slogg', 'koi_slogg_err1', 'koi_slogg_err2', 'koi_srad', 'koi_srad_err1', 'koi_srad_err2',
         'ra', 'dec', 'koi_kepmag'
     ];
-    
+
     const columnsContainer = document.getElementById('required-columns');
     requiredColumns.forEach(column => {
         const span = document.createElement('span');
         span.textContent = column;
         columnsContainer.appendChild(span);
     });
+
+    // Create scattered stars
+    createStars('.stars', 200, 1, 0.8);
+    createStars('.stars2', 100, 2, 0.5);
+    createStars('.stars3', 50, 3, 0.3);
 });
+
+// Function to create randomly scattered stars
+function createStars(containerSelector, count, size, opacity) {
+    const container = document.querySelector(containerSelector);
+    for (let i = 0; i < count; i++) {
+        const star = document.createElement('div');
+        star.style.position = 'absolute';
+        star.style.width = size + 'px';
+        star.style.height = size + 'px';
+        star.style.backgroundColor = 'white';
+        star.style.borderRadius = '50%';
+        star.style.opacity = opacity;
+        star.style.left = Math.random() * 100 + '%';
+        star.style.top = Math.random() * 100 + '%';
+        star.style.animation = `twinkle ${2 + Math.random() * 3}s infinite alternate`;
+        container.appendChild(star);
+    }
+}

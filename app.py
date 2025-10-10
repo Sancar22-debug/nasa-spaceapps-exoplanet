@@ -37,6 +37,103 @@ scaler = joblib.load('scaler.pkl')
 imputer = joblib.load('imputer.pkl')
 model_columns = joblib.load('model_columns.pkl')
 
+# --- Feature metadata cache (computed on first request) ---
+_FEATURE_METADATA_CACHE = None
+
+# Human-readable descriptions for common KOI features
+_FEATURE_DESCRIPTIONS = {
+    'koi_score': 'Disposition score (0-1) indicating confidence in KOI vetting.',
+    'koi_fpflag_nt': 'Not Transit-Like flag (1 indicates non-transit signal).',
+    'koi_fpflag_ss': 'Stellar variability or systematics suspected (1 indicates stellar-statistic issue).',
+    'koi_fpflag_co': 'Centroid offset indicates background source (1 indicates offset).',
+    'koi_fpflag_ec': 'Ephemeris match with known variable/eclipsing source (1 indicates match).',
+    'koi_period': 'Orbital period of the planet candidate in days.',
+    'koi_duration': 'Transit duration in hours.',
+    'koi_depth': 'Transit depth in parts-per-million (ppm).',
+    'koi_prad': 'Estimated planet radius in Earth radii.',
+    'koi_period_err1': 'Positive uncertainty on the orbital period.',
+    'koi_period_err2': 'Negative uncertainty on the orbital period.',
+    'koi_time0bk': 'Time of first transit in BKJD.',
+    'koi_impact': 'Transit impact parameter (0 central, ~1 grazing).',
+    'koi_teq': 'Planet equilibrium temperature in Kelvin.',
+    'koi_insol': 'Insolation (stellar flux) in Earth units.',
+    'koi_model_snr': 'Transit model signal-to-noise ratio.',
+    'koi_tce_plnt_num': 'TCE planet number within the system.',
+    'koi_steff': 'Stellar effective temperature in Kelvin.',
+    'koi_slogg': 'Stellar surface gravity log10(cm/s^2).',
+    'koi_srad': 'Stellar radius in Solar radii.',
+    'ra': 'Right Ascension of the target (degrees).',
+    'dec': 'Declination of the target (degrees).',
+    'koi_kepmag': 'Kepler apparent magnitude (brightness).'
+}
+
+def _compute_feature_metadata():
+    global _FEATURE_METADATA_CACHE
+    if _FEATURE_METADATA_CACHE is not None:
+        return _FEATURE_METADATA_CACHE
+
+    csv_path = 'KOI_Dataset_Exoplanets.csv'
+    metadata = {
+        'ranges': {},
+        'descriptions': _FEATURE_DESCRIPTIONS,
+        'fpflag_options': [0, 1],
+        'required_columns': model_columns,
+    }
+    try:
+        # Read only columns used by model to reduce memory
+        use_cols = [c for c in model_columns if c != 'id']
+        df = pd.read_csv(
+            csv_path,
+            usecols=lambda c: c in use_cols,
+            low_memory=False,
+            comment='#',        # ignore NASA header comment lines
+            na_values=['', 'NA', 'NaN', 'nan']
+        )
+        # Coerce to numeric for safety
+        for col in df.columns:
+            df[col] = pd.to_numeric(df[col], errors='coerce')
+        desc = df.describe(percentiles=[0.01, 0.99]).to_dict()
+        for col in df.columns:
+            col_stats = desc.get(col, {})
+            vmin = col_stats.get('min')
+            vmax = col_stats.get('max')
+            # Reasonable fallbacks
+            if pd.isna(vmin) or pd.isna(vmax):
+                vmin, vmax = None, None
+            # Clamp koi_score to [0,1]
+            if col == 'koi_score':
+                vmin, vmax = 0.0, 1.0
+            # Provide default ranges if degenerate
+            if vmin is not None and vmax is not None and vmin == vmax:
+                # widen slightly
+                pad = 1.0 if vmax == 0 else abs(vmax) * 0.1
+                vmin, vmax = vmin - pad, vmax + pad
+            metadata['ranges'][col] = {
+                'min': None if vmin is None else float(vmin),
+                'max': None if vmax is None else float(vmax)
+            }
+    except Exception as e:
+        # If dataset not available, provide sensible defaults
+        defaults = {
+            'koi_score': (0.0, 1.0),
+            'koi_period': (0.1, 1000.0),
+            'koi_duration': (0.1, 50.0),
+            'koi_depth': (10.0, 100000.0),
+            'koi_prad': (0.1, 30.0),
+            'koi_teq': (50.0, 4000.0),
+            'koi_insol': (0.001, 10000.0),
+            'koi_model_snr': (0.0, 1000.0),
+            'koi_steff': (2500.0, 10000.0),
+            'koi_slogg': (2.0, 5.5),
+            'koi_srad': (0.1, 100.0),
+            'koi_kepmag': (8.0, 20.0)
+        }
+        for col, (vmin, vmax) in defaults.items():
+            metadata['ranges'][col] = {'min': vmin, 'max': vmax}
+    _FEATURE_METADATA_CACHE = metadata
+    return metadata
+
+# --- API Endpoints ---
 # --- API Endpoints ---
 @app.route('/predict', methods=['POST'])
 def predict():
@@ -54,6 +151,14 @@ def predict():
         'prediction': prediction_label,
         'confidence': f"{confidence:.2f}%"
     })
+
+@app.route('/feature-metadata', methods=['GET'])
+def feature_metadata():
+    try:
+        metadata = _compute_feature_metadata()
+        return jsonify(metadata)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/chat', methods=['POST'])
 def chat():

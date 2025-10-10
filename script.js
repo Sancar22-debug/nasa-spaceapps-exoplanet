@@ -24,6 +24,62 @@ let predictionContext = null; // This will store the data for the chatbot
 let selectedFile = null; // Store the selected file for batch analysis
 let batchResults = null; // Store batch analysis results
 
+// --- Feature metadata & sliders ---
+let featureMetadata = null;
+
+async function loadFeatureMetadata() {
+    try {
+        const res = await fetch(`${API_URL}/feature-metadata`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        featureMetadata = await res.json();
+        applyRangesToSliders();
+        setupBatchGlossary();
+    } catch (e) {
+        console.warn('Failed to load feature metadata, using defaults', e);
+        applyRangesToSliders();
+    }
+}
+
+function setRangeAttrs(id, fallbackMin, fallbackMax) {
+    const input = document.getElementById(id);
+    if (!input) return;
+    const rv = document.querySelector(`.range-value[data-for="${id}"]`);
+    const ranges = (featureMetadata && featureMetadata.ranges && featureMetadata.ranges[id]) || null;
+    const min = ranges && ranges.min != null ? ranges.min : fallbackMin;
+    const max = ranges && ranges.max != null ? ranges.max : fallbackMax;
+    if (min != null) input.min = min;
+    if (max != null) input.max = max;
+    if (rv) rv.textContent = input.value;
+    input.addEventListener('input', () => { if (rv) rv.textContent = input.value; });
+}
+
+function applyRangesToSliders() {
+    setRangeAttrs('koi_score', 0, 1);
+    setRangeAttrs('koi_period', null, null);
+    setRangeAttrs('koi_duration', null, null);
+    setRangeAttrs('koi_depth', null, null);
+    setRangeAttrs('koi_prad', null, null);
+}
+
+function setupBatchGlossary() {
+    // Populate tooltips/descriptions in required columns list
+    try {
+        if (!featureMetadata || !featureMetadata.descriptions) return;
+        const container = document.getElementById('required-columns');
+        if (!container) return;
+        Array.from(container.children).forEach(span => {
+            const key = span.textContent;
+            const desc = featureMetadata.descriptions[key];
+            if (desc) {
+                span.title = desc;
+            }
+        });
+    } catch(_) {}
+}
+
+// Load metadata on DOM ready
+document.addEventListener('DOMContentLoaded', loadFeatureMetadata);
+
 // --- Prediction Form Logic ---
 predictionForm.addEventListener('submit', async (event) => {
     event.preventDefault();

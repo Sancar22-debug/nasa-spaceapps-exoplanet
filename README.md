@@ -20,7 +20,7 @@ A cutting-edge machine learning application that classifies Kepler Object of Int
 
 ## 🚀 Live Demo
 
-[Deploy to Render](https://render.com)
+[[https://nasa-spaceapps-exoplanet-1.onrender.com/]([https://render.com](https://nasa-spaceapps-exoplanet-1.onrender.com/))]
 
 ## 📊 Model Performance
 

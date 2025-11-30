@@ -55,4 +55,4 @@ This project was developed for the NASA Space Apps Challenge, focusing on exopla
 
 ## 📄 License
 
-MIT License - Feel free to use for educational and research purposes.
+Feel free to use for educational and research purposes.
